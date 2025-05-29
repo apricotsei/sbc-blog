@@ -1,7 +1,7 @@
-export default function RegisterPage() {
-    return (
-        <div>
-            ユーザー登録
-        </div>
-    )
+import LoginForm from "@/components/auth/LoginForm"
+
+export default function LoginPage() {
+  return (
+    <LoginForm/>
+  )
 }
