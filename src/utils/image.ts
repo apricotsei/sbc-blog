@@ -1,12 +1,12 @@
-import { writeFile,mkdir } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import path from 'path'
-import { existsSync } from 'fs'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase';
 
 export async function saveImage(file: File): Promise<string | null>{
     const useSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE_STORAGE === 'true';
 
     if(useSupabase){
+        //console.log('saveImage clear');
         return await saveImageToSupabase(file);
     }else {
         return await saveImageToLocal(file);
@@ -20,14 +20,13 @@ export async function saveImageToLocal(file: File): Promise<string | null>{
     
     try{
         //フォルダがなければ作成
-        if(!existsSync(uploadDir)){
-            await mkdir(uploadDir, { recursive: true})
-        }
+        // if(!existsSync(uploadDir)){
+        //     await mkdir(uploadDir, { recursive: true})
+        // }
 
         const filePath = path.join(uploadDir, fileName)
         await writeFile(filePath, buffer)
         return `/images/${fileName}`
-        
     }catch(error){
         console.error('画像保存エラー:',error)
         return null
@@ -35,13 +34,22 @@ export async function saveImageToLocal(file: File): Promise<string | null>{
 }
 
 async function saveImageToSupabase(file: File): Promise<string | null>{
+    // const { data: { user }} = await supabase.auth.getUser();
+
+    // if (!user) {
+    //     console.error('アップロード時に未ログイン状態です');
+    //     return null;
+    // }
+
     const fileName = `${Date.now()}_${file.name}`;
-    //const { error } = await supabase.storage
-        .from('udemy-next-blog-bucket')
+    const { error } = await supabase.storage
+        .from('sbc-blog-bucket')
         .upload(fileName, file, {
             cacheControl: '3600',
             upsert: false,
         });
+
+    console.log('aaa',error);
     
     if(error){
         console.error('Upload error:', error.message);
@@ -49,7 +57,7 @@ async function saveImageToSupabase(file: File): Promise<string | null>{
     }
 
     const { data: publicUrlData } = supabase.storage
-        .from('udemy-next-blog-bucket')
+        .from('sbc-blog-bucket')
         .getPublicUrl(fileName);
     
     return publicUrlData.publicUrl;
